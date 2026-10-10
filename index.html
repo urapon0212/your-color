@@ -48,8 +48,6 @@ const V_GAMUT_TO_709=[
 ];
 function srgbEncode(v){return v<=.0031308?12.92*v:1.055*Math.pow(Math.max(v,0),1/2.4)-.055}
 function vLogToLinear(v){return v<.181?(v-.125)/5.6:Math.pow(10,(v-.598206)/.241514)-.00873}
-const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
-const luminance=([r,g,b])=>.2126*r+.7152*g+.0722*b;
 function matV709(c){return V_GAMUT_TO_709.map(row=>row[0]*c[0]+row[1]*c[1]+row[2]*c[2])}
 function compressDisplayGamut(rgb){
  // Reduce excursions by compressing chroma toward BT.709 luminance,
