@@ -204,10 +204,10 @@ function drawShareCanvas(storyMode){
  return canvas
 }
 function shareImageBlob(storyMode){return new Promise((resolve,reject)=>{try{drawShareCanvas(storyMode).toBlob(b=>b?resolve(b):reject(Error('PNG生成に失敗しました')),'image/png')}catch(e){reject(e)}})}
-async function saveShareImage(storyMode){try{const b=await shareImageBlob(storyMode);saveBlob(b,filename().replace(/\\.cube$/i,'')+(storyMode?'_story':'_square')+'.png')}catch(e){alert('画像を保存できませんでした。'+e.message)}}
+async function saveShareImage(storyMode){try{const b=await shareImageBlob(storyMode);saveBlob(b,filename().replace(/\.cube$/i,'')+(storyMode?'_story':'_square')+'.png')}catch(e){alert('画像を保存できませんでした。'+e.message)}}
 $('saveSquare').onclick=()=>saveShareImage(false);
 $('saveStory').onclick=()=>saveShareImage(true);
-$('shareResult').onclick=async()=>{try{const blob=await shareImageBlob(false),file=new File([blob],filename().replace(/\\.cube$/i,'')+'_color.png',{type:'image/png'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'YOUR COLOR',text:'わたしの色は '+$('lutName').value.trim()+' #YOURCOLOR'});}else{saveBlob(blob,file.name)}}catch(e){if(e.name!=='AbortError')alert('共有できませんでした。'+e.message)}};
+$('shareResult').onclick=async()=>{try{const blob=await shareImageBlob(false),file=new File([blob],filename().replace(/\.cube$/i,'')+'_color.png',{type:'image/png'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'YOUR COLOR',text:'わたしの色は '+$('lutName').value.trim()+' #YOURCOLOR'});}else{saveBlob(blob,file.name)}}catch(e){if(e.name!=='AbortError')alert('共有できませんでした。'+e.message)}};
 
 function cubeText(){const name=$('lutName').value.trim();let lines=[`TITLE "${name}"`,`#LUMIXPHOTOSTYLE ${base}`,'LUT_3D_SIZE 33','DOMAIN_MIN 0.0 0.0 0.0','DOMAIN_MAX 1.0 1.0 1.0'];for(let i=0;i<lut.data.length;i+=3)lines.push(`${lut.data[i].toFixed(7)} ${lut.data[i+1].toFixed(7)} ${lut.data[i+2].toFixed(7)}`);return lines.join('\n')+'\n'}
 function saveBlob(blob,name){const link=document.createElement('a');const url=URL.createObjectURL(blob);link.href=url;link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
