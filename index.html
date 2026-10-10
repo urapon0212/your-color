@@ -17,7 +17,8 @@ const QUESTIONS=[
  {q:'好きな色のテンションは？',hint:'見た目の直感で選んでください。',opts:[['ひかえめで、落ち着く',[0,-.25,0,0,0]],['ほんのり、色づく',[0,-.10,0,0,0]],['自然な色が、いちばん',[0,0,0,0,0]],['ぱっと、鮮やか！',[0,.24,0,0,0]]] },
  {q:'光には、どんな物語がある？',hint:'明るいところの表情について。',opts:[['白く、すっきり',[.02,0,-.17,0,-.18]],['ふんわり、やわらかく',[-.17,-.06,0,0,0]],['はちみつ色に、あたたかく',[-.06,-.03,.12,0,.28]],['まぶしく、くっきり',[.20,.04,0,0,.08]]] },
  {q:'影のなかに、何を残そう？',hint:'暗い色に感じる雰囲気をひとつ。',opts:[['ひんやり、青い静けさ',[-.03,0,-.03,.28,0]],['やさしいグレーの余韻',[-.12,0,0,0,0]],['ほんのり、あたたかい影',[-.04,0,.06,-.17,0]],['深く、引き締まった黒',[.21,0,0,0,0]]] },
- {q:'最後に。写真に閉じ込めたい気持ちは？',hint:'これが、あなたの色の最後のひとかけら。',opts:[['静けさ',[-.09,-.09,-.06,.15,-.03]],['やさしさ',[-.14,-.09,.08,-.02,.11]],['ノスタルジー',[-.08,-.15,.20,-.02,.18]],['ときめき',[.10,.17,.05,.03,.10]]] }
+ {q:'最後に。写真に閉じ込めたい気持ちは？',hint:'これが、あなたの色の最後のひとかけら。',opts:[['静けさ',[-.09,-.09,-.06,.15,-.03]],['やさしさ',[-.14,-.09,.08,-.02,.11]],['ノスタルジー',[-.08,-.15,.20,-.02,.18]],['ときめき',[.10,.17,.05,.03,.10]]] },
+ {q:'緑は、どんな色に心惹かれる？',hint:'森や木々を思い浮かべて。',opts:[['みずみずしく、自然な緑',[0,0,0,0,0]],['少しくすんだ、穏やかな緑',[0,-.05,0,0,0]],['青みを帯びた、深い森の緑',[0,0,0,0,0]],['シアンが香る、フィルムの緑',[0,0,0,0,0]]] }
 ];
 const REFS=[['SKY','空のきもち',[115,149,194]],['GREEN','緑のリズム',[107,124,70]],['RED','赤のときめき',[214,71,77]],['YELLOW','黄色のきらめき',[234,211,56]],['SKIN LIGHT','やわらかな肌',[214,162,148]],['SKIN DEEP','深みのある肌',[143,99,86]]];
 const TONESTD=[[240,240,240],[212,212,212],[181,181,181],[147,147,147],[98,98,98],[52,52,52]];
@@ -35,17 +36,50 @@ $('toQuiz').onclick=()=>{step=QUESTIONS.length-1;renderQuestion();screen('quiz')
 const validName=s=>/^[A-Za-z][A-Za-z0-9 _-]{0,39}$/.test(s)&&s.trim().length>0;
 function checkName(){const v=$('lutName').value;$('finish').disabled=!validName(v);$('nameError').classList.toggle('hide',!v||validName(v))}
 $('lutName').addEventListener('input',checkName);document.querySelectorAll('.suggestion').forEach(b=>b.onclick=()=>{$('lutName').value=b.dataset.name;checkName()});
-function derive(){let accum=[0,0,0,0,0];for(let i=0;i<QUESTIONS.length;i++){const v=QUESTIONS[i].opts[answers[i]][1];for(let j=0;j<5;j++)accum[j]+=v[j]}return {contrast:clamp(accum[0],-.55,.55),sat:clamp(1+accum[1],.60,1.40),warm:clamp(accum[2],-.45,.45),shadow:clamp(accum[3],-.40,.40),highlight:clamp(accum[4],-.40,.40)}}
+function derive(){let accum=[0,0,0,0,0];for(let i=0;i<QUESTIONS.length;i++){const v=QUESTIONS[i].opts[answers[i]][1];for(let j=0;j<5;j++)accum[j]+=v[j]}return {contrast:clamp(accum[0],-.18,.52),sat:clamp(1+accum[1],.72,1.32),warm:clamp(accum[2],-.38,.38),shadow:clamp(accum[3],-.35,.35),highlight:clamp(accum[4],-.35,.35),green:[0,.12,.65,1][answers[6]??0],cinema:(answers[0]===3||answers[1]===3)?.65:0}}
 const luminance=([r,g,b])=>.2126*r+.7152*g+.0722*b;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 function srgbEncode(v){return v<=.0031308?12.92*v:1.055*Math.pow(v,1/2.4)-.055}
 function vLogToLinear(v){return v<.181?Math.max(0,(v-.125)/5.6):Math.max(0,Math.pow(10,(v-.598206)/.241514)-.00873)}
-function transform(rgb,p,b){let [r,g,bl]=rgb;if(b==='VLOG'){[r,g,bl]=[r,g,bl].map(x=>srgbEncode(clamp(vLogToLinear(x))));}let c=[r,g,bl],y=luminance(c);const lift=.015-Math.min(0,p.contrast)*.035;let contrastFactor=1+p.contrast*.52;let yt=clamp(.5+(y-.5)*contrastFactor+lift*(1-y));const ratio=y>.0001?yt/y:1;c=c.map(v=>clamp(v*ratio+(y<=.0001?yt:0)));y=luminance(c);let grey=y;c=c.map(v=>clamp(grey+(v-grey)*p.sat));let sh=(1-smooth((y-.05)/.55))*p.shadow;let hi=smooth((y-.38)/.57)*p.highlight;let overall=p.warm*.07;c[0]+=overall+hi*.07-sh*.018;c[1]+=hi*.030+sh*.015;c[2]-=overall+hi*.056-sh*.073;return c.map(v=>clamp(v));}
+function transform(rgb,p,b){
+ let c=rgb.slice();if(b==='VLOG')c=c.map(x=>srgbEncode(clamp(vLogToLinear(x))));
+ const original=c.slice(),lum=luminance(c);
+ // Preserve a meaningful contrast floor; soft styles should not look washed out.
+ const factor=1+p.contrast*.48;
+ const tone=clamp(.5+(lum-.5)*factor+(p.contrast<0?.004:0)*(1-lum));
+ const ratio=lum>.0001?tone/lum:1;
+ c=c.map(v=>clamp(lum>.0001?v*ratio:tone));
+ let y=luminance(c);c=c.map(v=>clamp(y+(v-y)*p.sat));
+ // Skin protection: broad orange skin region, smooth edges, avoids saturated reds.
+ const rg=original[0]-original[1],gb=original[1]-original[2];
+ const skin=smooth((rg-.018)/.09)*(1-smooth((rg-.31)/.18))*smooth((gb-.005)/.055)*(1-smooth((gb-.19)/.13))*smooth((original[1]-.14)/.16);
+ // Green selection: green-dominant colors only, blending smoothly near boundaries.
+ const greenDominance=c[1]-Math.max(c[0]*.82,c[2]*.96);
+ const gMask=smooth((greenDominance+.005)/.16)*smooth((c[1]-.12)/.2)*(1-skin);
+ const depth=p.green*gMask;
+ c[0]-=depth*.07;c[1]-=depth*.021;c[2]+=depth*.125;
+ y=luminance(c);
+ const shadowWeight=1-smooth((y-.05)/.55),highlightWeight=smooth((y-.38)/.57);
+ const shadowTint=shadowWeight*p.shadow,highlightTint=highlightWeight*p.highlight;
+ const overall=p.warm*.055;
+ c[0]+=overall+highlightTint*.066-shadowTint*.046;
+ c[1]+=highlightTint*.025+shadowTint*.035;
+ c[2]-=overall+highlightTint*.046-shadowTint*.080;
+ // Cinematic teal shadows / warm highlights, kept subtle.
+ const cm=p.cinema||0;
+ c[0]+=cm*(-shadowWeight*.018+highlightWeight*.023);
+ c[1]+=cm*(shadowWeight*.018);
+ c[2]+=cm*(shadowWeight*.034-highlightWeight*.024);
+ c=c.map(v=>clamp(v));
+ // Preserve familiar skin hues and luminance (relative to the standard base).
+ const protect=.84*skin;
+ return c.map((v,i)=>clamp(v*(1-protect)+original[i]*protect));
+}
 function buildLut(p,b){const n=33,data=new Float32Array(n*n*n*3);let k=0;for(let bi=0;bi<n;bi++)for(let gi=0;gi<n;gi++)for(let ri=0;ri<n;ri++){let v=transform([ri/(n-1),gi/(n-1),bi/(n-1)],p,b);for(let m=0;m<3;m++)data[k++]=v[m]}return {size:n,data}}
 function sampleLut(table,rgb){const n=table.size,axes=rgb.map(x=>clamp(x)*(n-1)),a=axes.map(Math.floor),h=a.map(v=>Math.min(n-1,v+1)),f=axes.map((v,i)=>v-a[i]);let out=[0,0,0];for(let z=0;z<2;z++)for(let y=0;y<2;y++)for(let x=0;x<2;x++){let r=x?h[0]:a[0],g=y?h[1]:a[1],b=z?h[2]:a[2],w=(x?f[0]:1-f[0])*(y?f[1]:1-f[1])*(z?f[2]:1-f[2]);let k=((b*n+g)*n+r)*3;for(let c=0;c<3;c++)out[c]+=table.data[k+c]*w}return out}
 function swatchColor(rgb){return '#'+rgb.map(x=>Math.round(clamp(x)*255).toString(16).padStart(2,'0')).join('')}
 function renderSwatches(){if(!lut)return;const target=$('swatches');target.replaceChildren();REFS.forEach((ref,i)=>{let rgb=(base==='STD'?ref[2]:REFSVLOG[i]).map(v=>v/255),transformed=sampleLut(lut,rgb),chosen=mode==='after'?transformed:rgb;let card=document.createElement('div');card.className='swatch';card.style.background=swatchColor(chosen);card.style.color=luminance(chosen)>.52?'#212522':'#fff';let top=document.createElement('span');top.textContent=ref[0];let bottom=document.createElement('strong');bottom.textContent=ref[1];card.append(top,bottom);target.append(card)});const tones=$('tones');tones.replaceChildren();(base==='STD'?TONESTD:TONEVLOG).forEach(v=>{const rgb=v.map(x=>x/255),result=mode==='after'?sampleLut(lut,rgb):rgb;const patch=document.createElement('div');patch.className='tone';patch.style.background=swatchColor(result);tones.append(patch)})}
-function colorStory(p){let light=p.contrast<-.1?'光はふんわりと広がり':p.contrast>.12?'光と影の輪郭はくっきり際立ち':'光は自然な表情を保ち';let shadow=p.shadow>.09?'影には涼やかな青みが宿ります':p.shadow<-.09?'影にはほのかな温もりが漂います':'影には穏やかな静けさが残ります';let color=p.sat<.92?'彩りを少し抑えて、景色の余韻を引き立てます':p.sat>1.12?'赤も緑も生き生きと、景色を鮮やかに彩ります':'色の個性を大切にしながら、日常に心地よい彩りを添えます';let warmth=p.warm>.1?'あたたかな空気':p.warm<-.1?'澄んだ空気':'やさしい空気';let keywords=[p.contrast<-.1?'SOFT':p.contrast>.12?'BOLD':'NATURAL',p.sat<.92?'CALM':p.sat>1.12?'VIVID':'BALANCED',p.warm>.1?'WARM':p.warm<-.1?'COOL':'GENTLE'];return {text:light+'、'+shadow+'。'+color+' '+warmth+'をまとった、あなたらしい色です。',keywords:keywords.join(' · ')}}
+function colorStory(p){let light=p.contrast<-.1?'光はふんわりと広がり':p.contrast>.12?'光と影の輪郭はくっきり際立ち':'光は自然な表情を保ち';let shadow=p.shadow>.09?'影には涼やかな青みが宿ります':p.shadow<-.09?'影にはほのかな温もりが漂います':'影には穏やかな静けさが残ります';let color=p.sat<.92?'彩りを少し抑えて、景色の余韻を引き立てます':p.sat>1.12?'赤も緑も生き生きと、景色を鮮やかに彩ります':'色の個性を大切にしながら、日常に心地よい彩りを添えます';let warmth=p.warm>.1?'あたたかな空気':p.warm<-.1?'澄んだ空気':'やさしい空気';let greenPhrase=p.green>.5?'。深い緑には青みが寄り添い、フィルムのような余韻を描きます':'';let keywords=[p.contrast<-.1?'SOFT':p.contrast>.12?'BOLD':'NATURAL',p.sat<.92?'CALM':p.sat>1.12?'VIVID':'BALANCED',p.warm>.1?'WARM':p.warm<-.1?'COOL':'GENTLE'];return {text:light+'、'+shadow+'。'+color+' '+warmth+'をまとった、あなたらしい色です'+greenPhrase,keywords:keywords.join(' · ')}}
 
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(v=>v.classList.toggle('on',v===b));renderSwatches()});
 function filename(){return $('lutName').value.trim().replace(/ +/g,'_')+'.cube'}
