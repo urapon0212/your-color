@@ -472,7 +472,7 @@ let surveyShown=false, logSessionId=null, logDownloadPromise=Promise.resolve();
 const LOG_ENDPOINT='https://evbqutglprnvjnuoootu.supabase.co/rest/v1/rpc/submit_your_color_log';
 const LOG_PUBLIC_KEY='sb_publishable_JH0JpFcv7iNxw-Z5SYwFqA_UgNCU1Ge';
 function makeLogId(){return typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():null}
-async function submitLog(payload){try{const res=await fetch(LOG_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','apikey':LOG_PUBLIC_KEY,'Authorization':'Bearer '+LOG_PUBLIC_KEY},body:JSON.stringify(payload),keepalive:true});if(!res.ok)console.warn('YOUR COLOR: anonymous logging unavailable (HTTP '+res.status+')');}catch(err){console.warn('YOUR COLOR: anonymous logging unavailable')}}
+async function submitLog(payload){try{const res=await fetch(LOG_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','apikey':LOG_PUBLIC_KEY},body:JSON.stringify(payload),keepalive:true});if(!res.ok)console.warn('YOUR COLOR: anonymous logging unavailable (HTTP '+res.status+')');}catch(err){console.warn('YOUR COLOR: anonymous logging unavailable')}}
 function recordDownload(format){if(!$('logConsent')?.checked)return;logSessionId=logSessionId||makeLogId();if(!logSessionId)return;logDownloadPromise=submitLog({p_action:'download',p_session:logSessionId,p_answers:answers,p_base:base,p_name:filename(),p_format:format});}
 
 function offerSaveSurvey(){if(surveyShown)return;surveyShown=true;setTimeout(()=>{if(!saveSurveyDialog.open)saveSurveyDialog.showModal()},300)}
